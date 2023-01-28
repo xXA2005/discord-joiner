@@ -4,7 +4,7 @@ import os
 import base64
 import requests
 import threading
-
+import random
 
 
 class Joiner:
@@ -14,13 +14,16 @@ class Joiner:
         invite_code = input("discord.gg/")
         with open("./tokens.txt") as f:
             tokens = f.read().split('\n')
-        ts = [threading.Thread(target=self.join,args=[token,invite_code]) for token in tokens]
+        ts = [threading.Thread(target=self.join,args=[token,invite_code,self.proxy()]) for token in tokens]
         for t in ts:
             t.start()
         for t in ts:
             t.join()
     
-    def join(self,token,invite):
+    def proxy(self):
+        return random.choice(open("./proxies.txt").read().splitlines())
+    
+    def join(self,token,invite,proxy):
         xconst, xprops = self.xheaders()
         headers = {
 		"accept":               "*/*",
@@ -28,7 +31,7 @@ class Joiner:
 		"accept-language":      "en-US,en-NL;q=0.9,en-GB;q=0.8",
 		"authorization":        token,
 		"content-type":         "application/json",
-		"cookie":               self.cookies(),
+		"cookie":               self.cookies(proxy),
 		"origin":               "https://discord.com",
 		"referer":              "https://discord.com/channels/@me/",
 		"sec-fetch-dest":       "empty",
@@ -40,14 +43,14 @@ class Joiner:
 		"x-discord-locale":     "en-US",
 		"x-super-properties":   xprops.decode(),
 	}
-        req = self.session.post(f"https://discord.com/api/v9/invites/{invite}",json={},headers=headers)
+        req = self.session.post(f"https://discord.com/api/v9/invites/{invite}",json={},headers=headers,proxy=f"http://{proxy}")
         if req.status_code == 200:
             print("joined")
         else:
             print("failed")
     
-    def cookies(self):
-        c = requests.get("https://discord.com")
+    def cookies(self,proxy):
+        c = requests.get("https://discord.com",proxies={"all":"http://"+proxy})
         return f"__dcfduid={c.cookies['__dcfduid']}; __sdcfduid={c.cookies['__sdcfduid']}; "
     
     def xheaders(self):
