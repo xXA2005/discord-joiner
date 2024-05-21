@@ -8,3 +8,5 @@ fast asf
 3-run `run.bat`
 4-put the invite code
 5-press enter fr
+
+old asf no working
